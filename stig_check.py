@@ -1,19 +1,46 @@
-import os
-import re
-import shutil
 from netmiko import ConnectHandler
+from netmiko import NetMikoTimeoutException
 from paramiko.ssh_exception import SSHException
 from paramiko.ssh_exception import AuthenticationException
 from getpass import getpass
+import logging
+logging.basicConfig(filename='netmiko_debug.log', level=logging.DEBUG)
+
+golden_standard = []
+golden_acl1_standard = []
+golden_acl2_standard = []
+golden_acl5_standard = []
+golden_acl55_standard = []
 
 # Open the document containing all the STIG commands to run
-with open('stig_file.txt') as f:
-    stig_list = f.read().splitlines() 
+with open('bulk_config_file.txt') as f:
+    bulk_config = f.read().splitlines()
+
+with open('golden_stig_file.txt', 'r') as f:
+    for line in f.readlines():
+        golden_standard.append([line.strip(), 'false'])
+
+with open('golden_acl1_file.txt') as f:
+    for line in f.readlines():
+        golden_acl1_standard.append([line.strip(), 'false'])
+
+with open('golden_acl2_file.txt') as f:
+    for line in f.readlines():
+        golden_acl2_standard.append([line.strip(), 'false'])
+
+with open('golden_acl5_file.txt') as f:
+    for line in f.readlines():
+        golden_acl5_standard.append([line.strip(), 'false'])
+
+with open('golden_acl55_file.txt') as f:
+    for line in f.readlines():
+        golden_acl55_standard.append([line.strip(), 'false'])
+
 
 # Questions for the user so that the device is connected to without using a file
 ip_addrs = []
 while True:
-    resp = input("Enter device MGMT IP ('q' to quit): ")
+    resp = input("Enter device MGMT IP (enter 'q' to quit): ")
     # to skip over ceratin IP range
     if resp.endswith("250.1"):
         continue
@@ -35,106 +62,154 @@ for devices in ip_addrs:
         'ip': devices,
         'username': username,
         'password': password,
-        'secret': en_secret  
+        'secret': en_secret,
+        'read_timeout_override': 120,
     }
-    
+
     # Connecting to the device and then goes into global configuration, sends the commands from the file and then prints the output
     try:
-        net_connect = ConnectHandler(**ios_device)    
-        output = net_connect.send_config_set(stig_list)
-        print(output)
+        net_connect = ConnectHandler(**ios_device, verbose=True)
+        net_connect.enable()           
+        running_config = net_connect.send_config_set(bulk_config)
+        running_acl1 = net_connect.send_command("show access-list 1")
+        running_acl2 = net_connect.send_command("show access-list 2")
+        running_acl5 = net_connect.send_command("show access-list 5")
+        running_acl55 = net_connect.send_command("show access-list 55")
     except (AuthenticationException):
         print('Authentication failure ' + devices)
+        continue
     except (NetMikoTimeoutException):
         print('Timeout to device ' + devices)
+        continue
     except (EOFError):
         print('End of file while attempting device ' + devices)
+        continue
     except (SSHException):
         print('SSH Issue. Are you sure SSH is enabled? ' + devices)
+        continue
     except Exception as unknown_error:
         print('Some other error ' + str(unknown_error))
-    
-    # Write output to a file    
-    filename = f"{devices}.txt"
-    with open(f"{filename}", 'w') as file:
-        file.write(output)
-    
-    # Open the file and read its contents
-    with open(filename, "r") as f:
-        contents = f.read()
-    
-    # Searches for the hostname to save the file as the hostname and not the IP    
-    hostname_pattern = r"hostname\nhostname\s+(\S+)"
-    match = re.search(hostname_pattern, contents)
-    
-   # If a hostname was found, rename the file to that hostname
-    if match:
-        hostname = match.group(1)
-        os.rename(filename, hostname + ".txt")
-    
-    # Define the path to the directory where the file should be moved
-    destination_directory = "stig_checks"
-   
-    # Move the file to the destination directory, replacing the destination file if it already exists
-    try:
-        shutil.move(os.path.join(os.getcwd(), hostname + ".txt"), os.path.join(os.getcwd(), destination_directory, hostname + ".txt"))
-        print(f"File {hostname}.txt was created and moved to {destination_directory}")
-    except shutil.Error as e:
-        print(f"Error moving file {hostname}.txt to {destination_directory}: {e}")
-    
-    # Opens the files  
-    golden_stig = open("golden_stig.txt", "r")
-    device_howis = open(f"{destination_directory}/{hostname}.txt", "r")
+        continue
 
-    # Reads the lines in the file
-    golden_stig_data = golden_stig.readlines()
-    device_howis_data = device_howis.readlines()
+    print("\n\n\n")
+    #print(running_acl1)
+    #print("\n\n\n")
 
-    # Creates a set to be iterated 
-    golden_stig_set = set(golden_stig_data)
-    device_howis_set = set(device_howis_data)
+    missing_commands = []
 
-    i = 0  # Line index for the first file
-    j = 0  # Line index for the second file
-    # Stores the lines to look up later
-
-    for line1 in golden_stig_data:
-        i += 1
-        
-        if line1 in device_howis_set:
-            print("Line", i, ": IDENTICAL (Found)")
-            device_howis_set.remove(line1)  # Remove found line to avoid duplicates
-
+    for output in golden_standard:
+        if output[0] == r"path flash:/archived_configs" or output[0] == r"path bootflash:/archived_configs":
+            output[1] = 'true'
+        elif output[0] in running_config:
+            output[1] = 'true'
         else:
+            missing_commands.append(output[0])
 
-            # 
-            while j < len(device_howis_data):
-                line2 = device_howis_data[j]
+    if missing_commands:
+        print("//////// Missing the following commands \\\\\\\\\\\\\\\\")
+        for command in missing_commands:
+            print(command)
 
-                # Creates a variable to be used to skip the lines we don't want to compare
-                skipped_lines = (f"{hostname}", "configure terminal", "Enter")
-                # Does not compare lines that start with the hostname and continues the for loop
-                if line2.startswith(skipped_lines):
-                    j += 1
-                    continue
+    print("\n")
+    acl1 = []
+    missing_acl1 = []
+    replace_acl1 = running_acl1.replace(", wildcard bits", "")
 
-                # Matching line1 from both files
-                if line1 == line2:
+    for x in range(len(acl1)):
+        acl1[x] = acl1[x].lstrip('0123456789').strip()
+        if acl1[x][-1] == ')':
+            temp = acl1[x].split('(')
+            acl1[x] = temp[0].strip()
 
-                    # Print IDENTICAL if similar
-                    print("Line", i, ": IDENTICAL")
-                    j += 1  # Move to the next line in the second file
-                    #break  # Continue with the next line in the first file
-                else:
-                    print("Line", i, ":")
-                    # Else print that line from both files
-                    print("\tGolden STIG:", line1, end='')
-                    print(f"\t{hostname}:", line2, end='')
-                    j += 1  # Move to the next line in the second file even if not identical
-                    break
+    for output in golden_acl1_standard:
+        if output[0] == r"ip access-list standard 1" or output[0] == r"Standard IP access list 1":
+            output[1] = 'true'
+        elif output[0] in replace_acl1:
+            output[1] = 'true'
+        else:
+            missing_acl1.append(output[0])
 
-    # Closing the files
-    golden_stig.close()
-    device_howis.close()         
-    
-    print(f"STIG check complete for {hostname}")
+    if missing_acl1:
+        print("//////// Missing the following from ACL 1 \\\\\\\\\\\\\\\\")
+        for command in missing_acl1:
+            print(command)
+
+    print("\n")
+    acl2 = []
+    missing_acl2 =[]
+    replace_acl2 = running_acl2.replace(", wildcard bits", "")
+
+    for x in range(len(acl2)):
+        acl2[x] = acl2[x].lstrip('0123456789').strip()
+        if acl2[x][-1] == ')':
+            temp = acl2[x].split('(')
+            acl2[x] = temp[0].strip()
+
+    for output in golden_acl2_standard:
+        if output[0] == r"ip access-list standard 2" or output[0] == r"Standard IP access list 2":
+            output[1] = 'true'
+        elif output[0] in replace_acl2:
+            output[1] = 'true'
+        else:
+            missing_acl2.append(output[0])
+
+    if missing_acl2:
+        print("//////// Missing the following from ACL 2 \\\\\\\\\\\\\\\\")
+        for commnad in missing_acl2:
+            print(commnad)
+
+    print("\n")
+    acl5 = []
+    missing_acl5 = []
+    replace_acl5 = running_acl5.replace(", wildcard bits", "")
+
+    for x in range(len(acl5)):
+        acl5[x] = acl5[x].lstrip('0123456789').strip()
+        if acl5[x][-1] == ')':
+            temp = acl5[x].split('(')
+            acl5[x] = temp[0].strip()
+
+    for output in golden_acl5_standard:
+        if output[0] == r"ip access-list standard 5" or output[0] == r"Standard IP access list 5":
+            output[1] = 'true'
+        elif output[0] in replace_acl5:
+            output[1] = 'true'
+        else:
+            missing_acl5.append(output[0])
+
+    if missing_acl5:
+        print("//////// Missing the following from ACL 5 \\\\\\\\\\\\\\\\")
+        for command in missing_acl5:
+            print(command)
+
+
+    print("\n")
+    acl55 = []
+    missing_acl55 = []
+    replace_acl55 = running_acl55.replace(", wildcard bits", "")
+
+    for x in range(len(acl55)):
+        acl55[x] = acl55[x].lstrip('0123456789').strip()
+        if acl55[x][-1] == ')':
+            temp = acl55[x].split('(')
+            acl55[x] = temp[0].strip()
+
+    for output in golden_acl55_standard:
+        if output[0] == r"ip access-list standard 55" or output[0] == r"Standard IP access list 55":
+            output[1] = 'true'
+        elif output[0] in replace_acl55:
+            output[1] = 'true'
+        else:
+            missing_acl55.append(output[0])
+
+    if missing_acl55:
+        print("//////// Missing the following from ACL 55 \\\\\\\\\\\\\\\\")
+        for command in missing_acl55:
+            print(command)
+
+    stig_compliant_check = missing_commands + missing_acl1 + missing_acl2 + missing_acl5 + missing_acl55
+
+    if not stig_compliant_check:
+        print("Device is STIG complaint")
+    else:
+        print("Device is not STIG compliant, revisit the IOS_Template and check again")
