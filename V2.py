@@ -9,11 +9,12 @@ logging.basicConfig(filename='netmiko_debug.log', level=logging.DEBUG)
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def index():
     return render_template('stig_check.html', name='SOCOM SENTRY')
 
-def script():
+@app.route('/submit', methods=['POST'])
+def submit():
     golden_standard = []
     golden_acl1_standard = []
     golden_acl2_standard = []
@@ -209,6 +210,7 @@ def script():
         else:
             print("Device is not STIG compliant, revisit the IOS_Template and check again")
             
+        return str(stig_compliant_check)
     
             
 if __name__ == '__main__':
