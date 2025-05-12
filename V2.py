@@ -92,10 +92,8 @@ def script():
 
         missing_commands = []
 
-        for output in golden_standard:
-            if output[0] == r"logging host 10.28.228.168 transport udp port 10514" or output[0] == r"logging host 10.28.228.168 transport udp port 10516":
-                output[1] = 'true'
-            elif output[0] == r"path flash:/archived_configs" or output[0] == r"path bootflash:/archived_configs":
+        for output in golden_standard:'
+            if output[0] == r"path flash:/archived_configs" or output[0] == r"path bootflash:/archived_configs":
                 output[1] = 'true'
             elif output[0] in running_config:
                 output[1] = 'true'
@@ -207,7 +205,7 @@ def script():
         stig_compliant_check = missing_commands + missing_acl1 + missing_acl2 + missing_acl5 + missing_acl55
 
         if not stig_compliant_check:
-            print("Device is STIG complaint, proceed with emailing SOCOM Enterprise networks")
+            print("Device is STIG compliant")
         else:
             print("Device is not STIG compliant, revisit the IOS_Template and check again")
             
