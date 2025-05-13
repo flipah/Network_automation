@@ -211,7 +211,7 @@ def submit():
             result = "Device is not STIG compliant, revisit the IOS_Template and check again\n"
             result += "\n".join(stig_compliant_check)
     
-        return render_template('SENTRY.html', name='SOCOM SENTRY', result=result)
+        return render_template('SENTRY.html', name='SPECTOR', result=result)
     
             
 if __name__ == '__main__':
