@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return render_template('spectork.html', name='SPECTOR')
+    return render_template('specter_pre.html', name='SPECTER')
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -211,7 +211,7 @@ def submit():
             result = "Device is not STIG compliant, revisit the IOS_Template and check again\n"
             result += "\n".join(stig_compliant_check)
     
-        return render_template('spector.html', name='SPECTOR', result=result)
+        return render_template('specter_post.html', name='SPECTER', result=result)
     
             
 if __name__ == '__main__':
