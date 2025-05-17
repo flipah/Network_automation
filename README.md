@@ -2,27 +2,28 @@
 
 ## Overview
 
-**Network_automation** is a Python-based project designed to automate the process of checking and enforcing network device compliance—specifically for Cisco IOS devices—against Security Technical Implementation Guides (STIGs). The project provides both a command-line and a web-based (Flask) interface for validating device configurations and access control lists (ACLs) against predefined "golden" standards.
+**Network_automation** is a Python project for automating the assessment and enforcement of security compliance on Cisco IOS network devices. It enables both command-line and web-based (Flask) workflows to check device configurations and Access Control Lists (ACLs) against pre-defined "golden" STIG (Security Technical Implementation Guide) baselines.
 
 ## Features
 
-- **Automated STIG Compliance Checking:** Connects to Cisco devices, pushes configuration commands, and verifies compliance with STIG standards.
-- **ACL Validation:** Compares device access control lists (ACLs) against golden templates for multiple ACLs (1, 2, 5, 55).
-- **Bulk Configuration:** Supports batch processing of commands read from files for efficient device configuration.
-- **Web Interface:** Includes a Flask web app for user-friendly compliance checking via browser form submission.
-- **Exception Handling:** Robust error handling for authentication failures, timeouts, SSH issues, and other errors.
-- **Result Reporting:** Clearly reports missing configuration lines and STIG compliance status for each device.
+- **Automated STIG Compliance Checks:** Connects to Cisco devices, applies configuration commands, and checks for compliance with STIGs.
+- **ACL Validation:** Compares device ACLs (1, 2, 5, 55) to golden templates.
+- **Bulk Configuration:** Reads and applies batches of configuration commands from files.
+- **Web Interface (SPECTOR):** User-friendly browser-based tool for compliance checks with distinct input and output pages.
+- **Comprehensive Error Handling:** Handles authentication, SSH, and device connection errors gracefully.
+- **Clear Reporting:** Lists missing configuration/ACL lines and compliance status per device.
 
-## Project Structure
+## Directory Structure
 
 ```
 Network_automation/
 │
-├── stig_check.py                     # Main CLI script for compliance checks
+├── stig_check.py                     # CLI script for compliance checks
 ├── flask/
 │   ├── stig_check_flask.py           # Flask web app for compliance checks
 │   └── templates/
-│       ├── spector.html              # Web UI for SPECTOR tool
+│       ├── spector_pre.html          # Web UI: input form for device info (NEW/RENAMED)
+│       ├── specter_post.html         # Web UI: output/results page (NEW)
 │       └── spector_style.css         # Stylesheet for the web interface
 ├── golden/
 │   ├── bulk_config_file.txt          # Bulk config commands to push to devices
@@ -36,93 +37,66 @@ Network_automation/
 
 ## How It Works
 
-### 1. STIG Compliance via Command Line (`stig_check.py`)
-
-- Prompts user for a list of device management IPs, credentials, and enable secrets.
-- Reads bulk configuration commands and golden templates from text files.
+### 1. CLI Compliance Checker (`stig_check.py`)
+- Prompts for device IPs, credentials, and enable secret.
+- Reads golden configuration/ACL templates and bulk configs from the `golden/` directory.
 - For each device:
-  - Connects using SSH via Netmiko.
-  - Pushes configuration commands from `bulk_config_file.txt`.
-  - Retrieves running configuration and ACLs.
-  - Compares current device configuration and ACLs to golden standards.
-  - Reports missing lines for STIG or ACL compliance and overall status.
+    - Connects via SSH using Netmiko.
+    - Sends configuration commands.
+    - Retrieves and compares running configs and ACLs to golden templates.
+    - Reports missing lines and compliance status.
 
-**Key Dependencies:**  
-- `netmiko` (for SSH automation)
-- `paramiko` (for SSH exceptions)
+### 2. Web Interface (SPECTOR) with Input and Output Pages
+- **Input Page:**  
+  - `spector_pre.html` presents a web form for device info (IP addresses, credentials).
+- **Result Page:**  
+  - `specter_post.html` displays the compliance check results after submission.
+- Styling is provided by `spector_style.css`.
+- Flask app logic is in `stig_check_flask.py`:
+    - Loads golden configs, connects to devices, checks compliance.
+    - Renders the correct template for each step.
 
-**Robust Error Handling:**  
-- Authentication failures
-- SSH timeouts or errors
-- Custom messages for missing/incorrect configuration
+### 3. Golden Configuration Files (`golden/`)
+- **bulk_config_file.txt**: List of config commands to push
+- **golden_stig_file.txt**: Golden baseline for STIG compliance
+- **golden_acl{N}_file.txt**: Golden templates for ACLs 1, 2, 5, 55
 
-### 2. STIG Compliance via Web Interface (`flask/stig_check_flask.py`)
+## Example Workflows
 
-- Flask server hosts a web frontend (`spector.html`).
-- Users submit device info (IP, credentials) via a form.
-- Backend logic mirrors the CLI script—reads golden configs, connects to devices, and checks compliance.
-- Results (e.g., missing config lines, compliance status) are displayed on the web page.
+### CLI
+1. Run `python stig_check.py`
+2. Enter device IPs, credentials, and enable secret
+3. Script connects to each device, pushes configs, and checks compliance
+4. Missing lines and final compliance status are printed to console
 
-**Web UI:**  
-- `spector.html` provides a user-friendly interface for entering device info.
-- `spector_style.css` styles the UI for clarity and readability.
+### Web (SPECTOR)
+1. Run `python flask/stig_check_flask.py`
+2. Open browser to provided URL (usually `localhost:5000`)
+3. Enter device info in **spector_pre.html** form and submit
+4. View compliance results on **specter_post.html**
 
-### 3. Golden Configuration Files
+## Key Files
 
-- Located in the `golden/` directory or project root.
-- Used as the source of truth for what constitutes a compliant device.
-- Each ACL and the main STIG config has a dedicated file.
-
-## Example Workflow
-
-### CLI Usage
-
-1. Run `stig_check.py`.
-2. Enter device IPs, credentials, and enable secret when prompted.
-3. The script connects to each device, pushes configs, and checks for compliance.
-4. Output indicates missing configuration lines and final compliance status.
-
-### Web Usage
-
-1. Start the Flask app (`python flask/stig_check_flask.py`).
-2. Open the browser and navigate to the web interface.
-3. Enter device info and submit.
-4. View compliance results directly in the browser.
-
-## Key Files Explained
-
-- **stig_check.py:**  
-  The main script for automating compliance checks via CLI.
-
-- **flask/stig_check_flask.py:**  
-  The Flask web application. Defines routes for the main page and submission, handles form input, and processes compliance checking.
-
-- **golden/bulk_config_file.txt & golden_stig_file.txt:**  
-  Lists of commands and golden configuration standards to be enforced and checked.
-
-- **golden_aclX_file.txt:**  
-  Golden templates for access lists 1, 2, 5, and 55.
-
-- **flask/templates/spector.html:**  
-  HTML template for the web interface.
-
-- **flask/templates/spector_style.css:**  
-  CSS file to style the web interface.
+- **stig_check.py**: Main CLI script for device compliance checks.
+- **flask/stig_check_flask.py**: Flask web app with compliance checking logic.
+- **golden/**: Directory for golden config and ACL templates.
+- **flask/templates/spector_pre.html**: Input page for the web UI (NEW/RENAMED).
+- **flask/templates/specter_post.html**: Results/output page for the web UI (NEW).
+- **flask/templates/spector_style.css**: CSS for the web interface.
 
 ## Error Handling
 
-Both the CLI and web versions are designed to handle:
-- SSH connectivity issues (timeouts, authentication failures)
-- File I/O errors (missing config files)
-- Device-side errors (e.g., SSH not enabled)
-
-All issues are reported clearly in the output or on the web page.
+Both CLI and web implementations robustly handle:
+- SSH connection errors (timeouts, authentication)
+- File reading errors (missing configuration files)
+- Device communication errors (e.g., SSH disabled)
+- All errors are logged or displayed clearly to the user.
 
 ## Extending the Project
 
-- To add new device types, expand the `ios_device` dictionary and golden config files.
-- Golden configs can be updated as standards evolve.
-- The UI and reporting can be extended for additional compliance details or device types.
+- To check additional device types, expand the `ios_device` dictionary and add relevant golden configs.
+- Update golden config files as needed to keep up with evolving standards.
+- Enhance the web UI or reporting for more detailed compliance feedback.
 
 ## License
 
