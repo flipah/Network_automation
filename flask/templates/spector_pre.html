@@ -8,8 +8,8 @@
     </head>
     <body>
         <header>
-            <h1 class="header_title">SOCOM SPECTOR</h1>
-            <p class="header_explainer">SOCOM Security Policy Evaluation and Compliance Tool for Enforcement and Review</p>
+            <h1 class="header_title">SPECTOR</h1>
+            <p class="header_explainer">Security Policy Evaluation and Compliance Tool for Enforcement and Review</p>
         </header>
         <div class="sidenav">
             <a href="index.html">HOME</a>
@@ -33,12 +33,6 @@
                     <button type="submit" class="button">Check STIG Compliance</button>
                 </div>
             </form>
-            {% if result %}
-            <section>
-                <h2>STIG Compliance Results:</h2>
-                <pre class="results">{{ result }}</pre>
-            </section>
-            {% endif %}
         </main>
     </body>
 </html>
