@@ -62,6 +62,7 @@ stig_compliance/
 
 ### Dependencies
 
+This is slightly outdated, I will update in the future
 Install all requirements using:
 ```bash
 pip install -r requirements.txt
