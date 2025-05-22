@@ -28,8 +28,8 @@ body{
 }
 
 img{
-    width: 100px;
-    padding: 0 0 0 30px;
+    width: 200px;
+    padding: 0 0 0 0px;
 }
 
 .header_title{
@@ -60,7 +60,7 @@ img{
 .sidenav{
     background-color: var(--w3-theme-l1);
     height: 100%;
-    width: 160px;
+    width: 210px;
     position: fixed;
     z-index: 1;
     top: 0;
@@ -84,8 +84,8 @@ img{
 }
 
 .main{
-    margin-left: auto; /* Same as the width of the sidenav */
-    font-size: 35px; /* Increased text to enable scrolling */
+    margin-left: auto;
+    font-size: 35px;
     padding: 0px 10px;
     font-weight: bold;
     text-align: center;
@@ -113,4 +113,20 @@ button:hover {
     background-color: #b4b7ba;
     box-shadow: 0 5px #666;
     transform: translateY(4px);
-  }
+}
+
+.results {
+    width: 100ch;
+    margin-left: 215px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    text-align: left;
+    overflow-wrap: break-word;
+}
+
+h2 {
+    text-align: center;
+}
+
+.back_button {
+    margin-left: 230px;

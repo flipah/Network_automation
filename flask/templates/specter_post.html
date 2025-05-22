@@ -1,20 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>SPECTOR</title>
+        <title>SOCOM SPECTER Results</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="spector_style.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='specter_style.css')}}">
     </head>
     <body>
         <header>
-            <h1 class="header_title">SPECTOR</h1>
-            <p class="header_explainer">Security Policy Evaluation and Compliance Tool for Enforcement and Review</p>
+            <h1 class="header_title">SOCOM SPECTER</h1>
+            <p class="header_explainer">SOCOM <b>S</b>ecurity <b>P</b>olicy <b>E</b>valuation and <b>C</b>ompliance <b>T</b>ool for <b>E</b>nforcement and <b>R</b>eview</p>
         </header>
         <div class="sidenav">
-            <a href="index.html">HOME</a>
+            <img src='/static/specter.png' alt='SPECTER Compliance Review'>
+            <a href="https://devices.ocom">HOME</a>
+            <a href="https://devices.com/software.html">SOFTWARE</a>
+            <a href="https://devices.com/certificates.html">CERTIFICATES</a>
+            <a href="https://stigChecker.com">STIG CHECKER</a>
         </div>      
         <main>
+            <div>
+                <button onclick="history.back()" class="back_button">Go Back</button>
+            </div>
             {% if result %}
             <section>
                 <h2>STIG Compliance Results:</h2>

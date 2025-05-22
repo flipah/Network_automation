@@ -16,7 +16,7 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     # Render the initial HTML form for user input
-    return render_template('specter_pre.html', name='specter')
+    return render_template('index.html', name='SOCOM SPECTER')
 
 # Route: Form submission handler
 @app.route('/submit', methods=['POST'])
@@ -82,7 +82,7 @@ def submit():
             running_acl2 = net_connect.send_command("show access-list 2")
             running_acl5 = net_connect.send_command("show access-list 5")
             running_acl55 = net_connect.send_command("show access-list 55")
-        # Handle possible connection/authentication exceptions
+        # Handle possible connection/authentication exceptions ///// NEED to replace print with return expression or append error to error list
         except (AuthenticationException):
             print('Authentication failure ' + devices)
             continue
@@ -204,4 +204,4 @@ def submit():
     
             
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='192.168.10.1', debug=True)

@@ -1,0 +1,3 @@
+do show run 
+do show snmp user
+do show ip ssh

@@ -16,23 +16,27 @@
 ## Directory Structure
 
 ```
-Network_automation/
+stig_compliance/
 │
-├── stig_check.py                     # CLI script for compliance checks
 ├── flask/
-│   ├── stig_check_flask.py           # Flask web app for compliance checks
-│   └── templates/
-│       ├── spector_pre.html          # Web UI: input form for device info (NEW/RENAMED)
-│       ├── specter_post.html         # Web UI: output/results page (NEW)
-│       └── spector_style.css         # Stylesheet for the web interface
-├── golden/
-│   ├── bulk_config_file.txt          # Bulk config commands to push to devices
-│   ├── golden_stig_file.txt          # Golden STIG config template
-│   ├── golden_acl1_file.txt          # Golden ACL 1 template
-│   ├── golden_acl2_file.txt          # Golden ACL 2 template
-│   ├── golden_acl5_file.txt          # Golden ACL 5 template
-│   └── golden_acl55_file.txt         # Golden ACL 55 template
-└── README.md                         # (This file)
+│   ├── stig_check_flask.py               # Flask web app for compliance checks
+│   ├── wsgi.py                           # What the gunicorn runs
+│   │── templates/
+│   │   ├── index.html                    # Web UI: input form for device info (NEW/RENAMED)
+│   │   ├── specter_post.html             # Web UI: output/results page (NEW)
+│   │   └── spector_style.css             # Stylesheet for the web interface
+│   │── static/
+│   │   ├── socom specter.png             # The image used that goes in the navigation menue
+│   │   └── specter_style.css             # the CSS file for formating the HTML page
+│   └── golden/
+│       ├── bulk_config_file.txt          # Bulk config commands to push to devices
+│       ├── golden_stig_file.txt          # Golden STIG config template
+│       ├── golden_acl1_file.txt          # Golden ACL 1 template
+│       ├── golden_acl2_file.txt          # Golden ACL 2 template
+│       ├── golden_acl5_file.txt          # Golden ACL 5 template
+│       ├── golden_acl55_file.txt         # Golden ACL 55 template
+│       └── golden_stig_file.txt          # All other configs that gets compared against
+└── README.md                             # (This file)
 ```
 
 ## How It Works
@@ -103,7 +107,3 @@ Both CLI and web implementations robustly handle:
 *No license specified. For reuse or contribution, contact the repository owner.*
 
 ---
-
-**Repository:** https://github.com/flipah/Network_automation  
-**Owner:** [flipah](https://github.com/flipah)  
-**Primary Language:** Python
