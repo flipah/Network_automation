@@ -1,9 +1,17 @@
-# STIG Compliance Automation
+# Network_automation
 
 ## Overview
 
-**STIG Compliance Automation** is a Python toolkit for assessing and enforcing security compliance on Cisco IOS network devices. It includes a modernized web interface (SPECTER), automated device configuration and compliance checking, and bulk management features. The project now leverages Flask for web-based workflows and provides modular automation scripts for advanced use cases.
+**Network_automation** is a Python project for automating the assessment and enforcement of security compliance on Cisco IOS network devices. It enables both command-line and web-based (Flask) workflows to check device configurations and Access Control Lists (ACLs) against pre-defined "golden" STIG (Security Technical Implementation Guide) baselines.
 
+## Features
+
+- **Automated STIG Compliance Checks:** Connects to Cisco devices, applies configuration commands, and checks for compliance with STIGs.
+- **ACL Validation:** Compares device ACLs (1, 2, 5, 55) to golden templates.
+- **Bulk Configuration:** Reads and applies batches of configuration commands from files.
+- **Web Interface (SPECTOR):** User-friendly browser-based tool for compliance checks with distinct input and output pages.
+- **Comprehensive Error Handling:** Handles authentication, SSH, and device connection errors gracefully.
+- **Clear Reporting:** Lists missing configuration/ACL lines and compliance status per device.
 
 ## Directory Structure
 
@@ -11,95 +19,91 @@
 stig_compliance/
 │
 ├── flask/
-│   ├── stig_check_flask.py        # Flask web app for compliance checks
-│   ├── wsgi.py                    # Gunicorn entrypoint
-│   ├── templates/
-│   │   ├── index.html             # Input form for device info
-│   │   ├── specter_post.html      # Compliance check results page
-│   ├── static/
-│   │   ├── socom specter.png      # Navigation menu image
-│   │   └── specter_style.css      # Unified CSS for web interface
+│   ├── stig_check_flask.py               # Flask web app for compliance checks
+│   ├── wsgi.py                           # What the gunicorn runs
+│   │── templates/
+│   │   ├── index.html                    # Web UI: input form for device info (NEW/RENAMED)
+│   │   ├── specter_post.html             # Web UI: output/results page (NEW)
+│   │   └── spector_style.css             # Stylesheet for the web interface
+│   │── static/
+│   │   ├── socom specter.png             # The image used that goes in the navigation menue
+│   │   └── specter_style.css             # the CSS file for formating the HTML page
 │   └── golden/
-│       ├── bulk_config_file.txt   # Bulk config commands
-│       ├── golden_stig_file.txt   # Golden STIG config template
-│       ├── golden_acl1_file.txt   # Golden ACL 1 template
-│       ├── golden_acl2_file.txt   # Golden ACL 2 template
-│       ├── golden_acl5_file.txt   # Golden ACL 5 template
-│       ├── golden_acl55_file.txt  # Golden ACL 55 template
-├── stig_push/
-│   ├── device_configuration.py    # Automated device config via NetMRI/Netmiko
-│   ├── git_pull.py                # Git pull and post-pull automation
-│   ├── netmiko_connection.py      # Netmiko-based device configuration
-│   ├── netmri_attribute_list.py   # NetMRI device attribute inspection
-│   └── netmri_device_list.py      # NetMRI device discovery
-├── requirements.txt               # Python dependencies
-└── README.md                      # (This file)
+│       ├── bulk_config_file.txt          # Bulk config commands to push to devices
+│       ├── golden_stig_file.txt          # Golden STIG config template
+│       ├── golden_acl1_file.txt          # Golden ACL 1 template
+│       ├── golden_acl2_file.txt          # Golden ACL 2 template
+│       ├── golden_acl5_file.txt          # Golden ACL 5 template
+│       ├── golden_acl55_file.txt         # Golden ACL 55 template
+│       └── golden_stig_file.txt          # All other configs that gets compared against
+└── README.md                             # (This file)
 ```
 
----
+## How It Works
 
-## How to Use
+### 1. CLI Compliance Checker (`stig_check.py`)
+- Prompts for device IPs, credentials, and enable secret.
+- Reads golden configuration/ACL templates and bulk configs from the `golden/` directory.
+- For each device:
+    - Connects via SSH using Netmiko.
+    - Sends configuration commands.
+    - Retrieves and compares running configs and ACLs to golden templates.
+    - Reports missing lines and compliance status.
 
-### Web Interface (SPECTER)
+### 2. Web Interface (SPECTOR) with Input and Output Pages
+- **Input Page:**  
+  - `spector_pre.html` presents a web form for device info (IP addresses, credentials).
+- **Result Page:**  
+  - `specter_post.html` displays the compliance check results after submission.
+- Styling is provided by `spector_style.css`.
+- Flask app logic is in `stig_check_flask.py`:
+    - Loads golden configs, connects to devices, checks compliance.
+    - Renders the correct template for each step.
 
-1. Run: `python flask/stig_check_flask.py` or deploy with Gunicorn via `wsgi.py`.
-2. Open your browser (typically at `localhost:5000`).
-3. Enter device info (IP, username, password, enable secret) in the form.
-4. View detailed compliance results on the output page.
+### 3. Golden Configuration Files (`golden/`)
+- **bulk_config_file.txt**: List of config commands to push
+- **golden_stig_file.txt**: Golden baseline for STIG compliance
+- **golden_acl{N}_file.txt**: Golden templates for ACLs 1, 2, 5, 55
 
-### Automation Scripts
+## Example Workflows
 
-- **Bulk Configuration & Compliance:**  
-  Use scripts in `stig_push/` for automated workflows, such as discovering devices with NetMRI and pushing configurations with Netmiko.
-- **Example:**  
-  `python stig_push/device_configuration.py`  
-  Follow prompts to select device types/networks and automate configuration.
+### CLI
+1. Run `python stig_check.py`
+2. Enter device IPs, credentials, and enable secret
+3. Script connects to each device, pushes configs, and checks compliance
+4. Missing lines and final compliance status are printed to console
 
-### Golden Config Files
-
-- All golden configurations and ACL templates for compliance checks are under `flask/golden/`.
-- Modify these files to update compliance baselines as needed.
-
-### Dependencies
-
-This is slightly outdated, I will update in the future
-Install all requirements using:
-```bash
-pip install -r requirements.txt
-```
-
----
+### Web (SPECTOR)
+1. Run `python flask/stig_check_flask.py`
+2. Open browser to provided URL (usually `localhost:5000`)
+3. Enter device info in **spector_pre.html** form and submit
+4. View compliance results on **specter_post.html**
 
 ## Key Files
 
-- `flask/stig_check_flask.py`: Web app backend for compliance checks
-- `flask/templates/index.html`: Web UI input page
-- `flask/templates/specter_post.html`: Web UI results page
-- `flask/static/specter_style.css`: Unified CSS for UI
-- `flask/golden/`: All golden config and ACL templates
-- `stig_push/`: New automation scripts and modules
-- `requirements.txt`: Dependency specification
-
----
+- **stig_check.py**: Main CLI script for device compliance checks.
+- **flask/stig_check_flask.py**: Flask web app with compliance checking logic.
+- **golden/**: Directory for golden config and ACL templates.
+- **flask/templates/spector_pre.html**: Input page for the web UI (NEW/RENAMED).
+- **flask/templates/specter_post.html**: Results/output page for the web UI (NEW).
+- **flask/templates/spector_style.css**: CSS for the web interface.
 
 ## Error Handling
 
-- Robust SSH, authentication, and file error handling in all scripts and the web app.
-- All errors are logged or clearly displayed to the user.
-
----
+Both CLI and web implementations robustly handle:
+- SSH connection errors (timeouts, authentication)
+- File reading errors (missing configuration files)
+- Device communication errors (e.g., SSH disabled)
+- All errors are logged or displayed clearly to the user.
 
 ## Extending the Project
 
-- To support more device types, update the NetMRI/Netmiko handler logic and supply new golden configs.
-- Enhance UI or reporting as needed.
-- Integrate with other inventory or automation systems via modular scripts.
-
----
+- To check additional device types, expand the `ios_device` dictionary and add relevant golden configs.
+- Update golden config files as needed to keep up with evolving standards.
+- Enhance the web UI or reporting for more detailed compliance feedback.
 
 ## License
 
-*No license specified. For reuse or contributions, please contact the repository owner.*
+*No license specified. For reuse or contribution, contact the repository owner.*
 
 ---
-
