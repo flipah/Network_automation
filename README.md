@@ -2,7 +2,7 @@
 
 ## Overview
 
-**STIG Compliance Automation** is a Python toolkit for assessing and enforcing security compliance on Cisco IOS network devices. It includes a modernized web interface (SPECTOR), automated device configuration and compliance checking, and bulk management features. The project now leverages Flask for web-based workflows and provides modular automation scripts for advanced use cases.
+**STIG Compliance Automation** is a Python toolkit for assessing and enforcing security compliance on Cisco IOS network devices. It includes a modernized web interface (SPECTER), automated device configuration and compliance checking, and bulk management features. The project now leverages Flask for web-based workflows and provides modular automation scripts for advanced use cases.
 
 
 ## Directory Structure
@@ -40,7 +40,7 @@ stig_compliance/
 
 ## How to Use
 
-### Web Interface (SPECTOR)
+### Web Interface (SPECTER)
 
 1. Run: `python flask/stig_check_flask.py` or deploy with Gunicorn via `wsgi.py`.
 2. Open your browser (typically at `localhost:5000`).
