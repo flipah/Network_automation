@@ -1,47 +1,5 @@
 import json
 
-def compare_commands(gc_file, running_config, section_keys=None):
-    """
-    Compares commands from specified sections in `gc_file` with those in `running_config`.
-
-    Args:
-        gc_file (dict): A dictionary containing sections and commands (loaded from JSON).
-        running_config (str):  The running configuration as a single string.
-        section_keys (list, optional): A list of section keys to compare. If None, all sections are compared.
-                                       Defaults to None.
-
-    Returns:
-        dict: A dictionary where keys are section names and values are lists of commands
-              missing from the `running_config` for that section.
-    """
-
-    missing_commands_by_section = {}
-
-    if section_keys is None:
-        section_keys = list(gc_file['sections'].keys())
-
-    running_config_lines = running_config.splitlines()  # Split into lines
-    running_config_set = set(line.strip() for line in running_config_lines if line.strip()) # Create set of non-empty lines
-
-
-    for section_key in section_keys:
-        missing_commands = []
-        try:
-            for command in gc_file['sections'][section_key]:
-                command = command.strip() # Remove leading/trailing whitespace for comparison
-                if command in running_config_set:
-                    print(f"Section {section_key}: Command '{command}' found.")
-                else:
-                    print(f"Section {section_key}: Command '{command}' missing.")
-                    missing_commands.append(command)
-        except KeyError:
-            print(f"Section '{section_key}' not found in gc_file.")
-            continue  # Skip to the next section
-
-        missing_commands_by_section[section_key] = missing_commands
-
-    return missing_commands_by_section
-
 # Load the golden config from JSON
 try:
     with open("golden_config.json", 'r') as file:
@@ -52,7 +10,6 @@ except FileNotFoundError:
 except json.JSONDecodeError:
     print("Error: Invalid JSON format in golden_config.json.")
     exit()
-
 
 # Your running configuration (multi-line string)
 running_config = """
@@ -73,17 +30,41 @@ snmp-server contact
 1234654162131
 """
 
-# Specify the sections to compare (or None to compare all)
+# Sections to compare (or set to None to compare all)
 sections_to_compare = ['2.1', '2.2', '3.1', '3.2']
+if sections_to_compare is None:
+    sections_to_compare = list(gc_file.get('sections', {}).keys())
 
-# Compare the configurations
-missing_commands_by_section = compare_commands(gc_file, running_config, sections_to_compare)
+# Normalize the running config
+running_config_lines = running_config.splitlines()
+running_config_set = set(line.strip() for line in running_config_lines if line.strip())
 
-# Print the results in a more organized way
+# Dictionary to store missing commands
+missing_commands_by_section = {}
+
+# Compare each section
+for section_key in sections_to_compare:
+    missing_commands = []
+
+    if section_key not in gc_file.get('sections', {}):
+        print(f"Section '{section_key}' not found in golden config.")
+        continue
+
+    for command in gc_file['sections'][section_key]:
+        command = command.strip()
+        if command in running_config_set:
+            print(f"Section {section_key}: Command '{command}' found.")
+        else:
+            print(f"Section {section_key}: Command '{command}' missing.")
+            missing_commands.append(command)
+
+    missing_commands_by_section[section_key] = missing_commands
+
+# Print the results
 for section, missing_commands in missing_commands_by_section.items():
     if missing_commands:
         print(f"\nSection {section}: Missing commands:")
-        for command in missing_commands:
-            print(f"  - {command}")
+        for cmd in missing_commands:
+            print(f"  - {cmd}")
     else:
         print(f"\nSection {section}: All commands present.")
